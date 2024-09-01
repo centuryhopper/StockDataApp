@@ -1,0 +1,58 @@
+﻿@* @page "/stock-data"
+@inject StockService StockService
+
+<h3>Real-Time Stock Data</h3>
+
+@if (stocks == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="row">
+        @foreach (var stock in stocks)
+        {
+            <div class="col-md-4">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <a @onclick="() => NavigateToHistoricalData(stock.Ticker)">
+                                @stock.Ticker
+                            </a>
+                        </h5>
+                        <p class="card-text">
+                            <strong>Open:</strong> @stock.Open<br />
+                            <strong>Close:</strong> @stock.Close<br />
+                            <strong>Previous Close:</strong> @stock.PreviousClose<br />
+                            <strong>High:</strong> @stock.High<br />
+                            <strong>Low:</strong> @stock.Low
+                        </p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<StockInfo> stocks;
+
+    protected override async Task OnInitializedAsync()
+    {
+        stocks = new List<StockInfo>();
+
+        // Add your ticker symbols here
+        var tickers = new List<string> { "AAPL", "MSFT", "GOOGL" };
+
+        foreach (var ticker in tickers)
+        {
+            var stock = await StockService.GetStockDataAsync(ticker);
+            stocks.Add(stock);
+        }
+    }
+
+    private void NavigateToHistoricalData(string ticker)
+    {
+        NavigationManager.NavigateTo($"/stocks/{ticker}/history");
+    }
+} *@

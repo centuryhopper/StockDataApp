@@ -1,0 +1,26 @@
+@* @page "/stocks/{ticker}/history"
+@inject StockService StockService
+
+<h3>Historical Data for @ticker</h3>
+
+@if (historicalData == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <!-- Display historical data here -->
+}
+
+@code {
+    [Parameter]
+    public string Ticker { get; set; }
+
+    private HistoricalData historicalData;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Replace with actual service call to fetch historical data
+        historicalData = await StockService.GetHistoricalDataAsync(Ticker);
+    }
+} *@

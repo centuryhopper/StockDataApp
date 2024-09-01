@@ -3,6 +3,9 @@ using Shared.Models;
 using Newtonsoft.Json.Linq;
 using System.Runtime.InteropServices.Marshalling;
 using Newtonsoft.Json;
+using Microsoft.AspNetCore.Identity;
+using Server.Contexts;
+using Microsoft.EntityFrameworkCore;
 
 namespace Server.Controllers;
 
@@ -14,20 +17,23 @@ public class StockDataController : ControllerBase
     private readonly IConfiguration configuration;
     private readonly HttpClient httpClient;
     private readonly IWebHostEnvironment webHostEnvironment;
+    private readonly UserManager<ApplicationUser> userManager;
 
-    public StockDataController(ILogger<StockDataController> logger, IConfiguration configuration, HttpClient httpClient, IWebHostEnvironment webHostEnvironment)
+    public StockDataController(ILogger<StockDataController> logger, IConfiguration configuration, HttpClient httpClient, IWebHostEnvironment webHostEnvironment, UserManager<ApplicationUser> userManager)
     {
         _logger = logger;
         this.configuration = configuration;
         this.httpClient = httpClient;
         this.webHostEnvironment = webHostEnvironment;
+        this.userManager = userManager;
     }
 
     [HttpGet]
     [Route("test")]
-    public IActionResult Test()
+    public async Task<IActionResult> Test()
     {
-        return Ok("api is working!");
+        var users = await userManager.Users.ToListAsync();
+        return Ok(users);
     }
 
     [HttpGet]
