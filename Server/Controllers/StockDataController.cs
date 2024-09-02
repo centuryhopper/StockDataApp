@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Microsoft.AspNetCore.Identity;
 using Server.Contexts;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Server.Controllers;
 
@@ -28,9 +29,17 @@ public class StockDataController : ControllerBase
         this.userManager = userManager;
     }
 
-    [HttpGet]
-    [Route("test")]
-    public async Task<IActionResult> Test()
+    [HttpGet("admin_test")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> AdminTest()
+    {
+        var users = await userManager.Users.ToListAsync();
+        return Ok(users);
+    }
+
+    [HttpGet("user_test")]
+    [Authorize(Roles = "Normal_User")]
+    public async Task<IActionResult> UserTest()
     {
         var users = await userManager.Users.ToListAsync();
         return Ok(users);

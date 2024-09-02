@@ -14,10 +14,15 @@ to test entire app from blazor wasm:
 
 */
 
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Server.Contexts;
+using Server.Repositories;
+using Swashbuckle.AspNetCore.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,7 +39,11 @@ builder.Services.AddSwaggerGen(options=>{
         Name = "Authorization",
         Type = SecuritySchemeType.ApiKey,
     });
+
+    options.OperationFilter<SecurityRequirementsOperationFilter>();
 });
+
+builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 
 // Configure the Identity database context
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -61,13 +70,27 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
 .AddSignInManager()
 .AddRoles<ApplicationRole>();
 
-
 builder.Services.Configure<IdentityOptions>(options =>
 {
     options.Password.RequiredLength = 10;
     options.Password.RequiredUniqueChars = 3;
     options.Password.RequireNonAlphanumeric = false;
     options.SignIn.RequireConfirmedAccount = true;
+});
+
+builder.Services.AddAuthentication(options => {
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options => {
+    options.TokenValidationParameters = new TokenValidationParameters {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateIssuerSigningKey = true,
+        ValidateLifetime = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+    };
 });
 
 if (!builder.Environment.IsDevelopment())
