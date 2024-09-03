@@ -1,4 +1,8 @@
-﻿@inherits LayoutComponentBase
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+
+@inherits LayoutComponentBase
 <div class="page">
     <div class="sidebar">
         <NavMenu />
@@ -6,7 +10,8 @@
 
     <main>
         <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            @* <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a> *@
+            <LoginDisplay></LoginDisplay>
         </div>
 
         <article class="content px-4">
@@ -14,3 +19,25 @@
         </article>
     </main>
 </div>
+
+@code {
+    private bool isAuthenticated;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        isAuthenticated = authState.User.Identity?.IsAuthenticated ?? false;
+    }
+
+    private async Task Logout()
+    {
+        // Implement your logout logic here
+        // For example, you might call a logout API and then navigate to the login page
+        await Task.Run(() => {
+            // Custom logout logic here
+        });
+
+        Navigation.NavigateTo("login", forceLoad: true);
+    }
+
+}

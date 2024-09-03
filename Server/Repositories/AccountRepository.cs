@@ -3,6 +3,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Server.Contexts;
 using Shared.Models;
@@ -10,7 +11,7 @@ using static Shared.Models.ServiceResponses;
 
 namespace Server.Repositories;
 
-public class AccountRepository(UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager, IConfiguration configuration) : IAccountRepository
+public class AccountRepository(StockDataDbContext stockDataDbContext, UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager, IConfiguration configuration) : IAccountRepository
 {
     public async Task<LoginResponse> LoginAccount(LoginDTO loginDTO)
     {
@@ -34,6 +35,27 @@ public class AccountRepository(UserManager<ApplicationUser> userManager, RoleMan
         var getUserRole = await userManager.GetRolesAsync(getUser);
         var userSession = new UserSession(getUser.Id, getUser.UserName, getUser.Email, getUserRole.First());
         string token = GenerateToken(userSession);
+
+        // add user to stock user table if they arent in it already
+        if (await stockDataDbContext.Stockusers.FirstOrDefaultAsync(u => u.UmsUserid == userSession.Id) is null)
+        {
+            try
+            {
+                await stockDataDbContext.Stockusers.AddAsync(new Stockuser {
+                    UmsUserid = userSession.Id!
+                    ,Email = userSession.Email!
+                    ,DateCreated = DateTime.Now
+                    ,DateLastLogin = DateTime.Now
+                    ,DateRetired = null
+                });
+            }
+            catch (System.Exception ex)
+            {
+                return new LoginResponse(false, null!, ex.Message);
+            }
+        }
+
+
         return new LoginResponse(true, token!, "Login completed");
     }
 

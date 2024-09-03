@@ -73,7 +73,9 @@ public partial class StockDataDbContext : DbContext
             entity.Property(e => e.Email)
                 .HasMaxLength(100)
                 .HasColumnName("email");
-            entity.Property(e => e.UmsUserid).HasColumnName("ums_userid");
+            entity.Property(e => e.UmsUserid)
+                .HasMaxLength(36)
+                .HasColumnName("ums_userid");
         });
 
         OnModelCreatingPartial(modelBuilder);

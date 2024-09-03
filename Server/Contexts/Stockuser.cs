@@ -7,7 +7,7 @@ public partial class Stockuser
 {
     public int Userid { get; set; }
 
-    public int UmsUserid { get; set; }
+    public string UmsUserid { get; set; } = null!;
 
     public string Email { get; set; } = null!;
 
