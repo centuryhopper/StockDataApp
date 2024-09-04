@@ -1,9 +1,46 @@
-﻿@* @page "/stock-data"
-@inject StockDataService StockDataService
+﻿@page "/stock-data"
+@inject IStockDataService StockDataService
+@inject NavigationManager NavigationManager
+@attribute [Authorize(Roles="Admin,Normal_User")]
 
 <h3>Real-Time Stock Data</h3>
 
-@if (stocks == null)
+<form @onsubmit="FetchStockData">
+    <div class="form-group">
+        <label for="tickerInput" class="m-3">Enter Ticker Symbol:</label>
+        <input type="text" maxlength="4" class="form-control" id="tickerInput" @bind="inputTicker"
+            placeholder="E.g., AAPL, MSFT" />
+    </div>
+    <button type="submit" class="btn btn-primary mt-3 mb-3">Get Real-Time Data</button>
+</form>
+
+@if (stockRealTimeInfo is not null)
+{
+    <div class="m-5">
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">
+                    @inputTicker
+                </h5>
+                <p class="card-text">
+                    <strong>Current:</strong> @stockRealTimeInfo.CurrentPrice<br />
+                    <strong>Change:</strong> @stockRealTimeInfo.Change<br />
+                    <strong>Percent Change:</strong> @stockRealTimeInfo.PercentChange<br />
+                
+                    <strong>Open:</strong> @stockRealTimeInfo.Open<br />
+                    <strong>Previous Close:</strong> @stockRealTimeInfo.PreviousClose<br />
+                    <strong>High:</strong> @stockRealTimeInfo.High<br />
+                    <strong>Low:</strong> @stockRealTimeInfo.Low
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn btn-primary" @onclick="()=>SaveStockData()">Save</button>
+    <button class="btn btn-danger" @onclick="()=>ResetSearch()">Reset</button>
+}
+
+@if (stocks == null || !stocks.Any())
 {
     <p>Loading...</p>
 }
@@ -16,16 +53,16 @@ else
                 <div class="card mb-3">
                     <div class="card-body">
                         <h5 class="card-title">
-                            <a @onclick="() => NavigateToHistoricalData(stock.Ticker)">
-                                @stock.Ticker
+                            <a href="#" @onclick="() => NavigateToHistoricalData(stock.TickerSymbol)">
+                                @stock.TickerSymbol
                             </a>
                         </h5>
                         <p class="card-text">
-                            <strong>Open:</strong> @stock.Open<br />
-                            <strong>Close:</strong> @stock.Close<br />
+                            <strong>Open:</strong> @stock.OpenPrice<br />
+                            <strong>Close:</strong> @stock.ClosePrice<br />
                             <strong>Previous Close:</strong> @stock.PreviousClose<br />
-                            <strong>High:</strong> @stock.High<br />
-                            <strong>Low:</strong> @stock.Low
+                            <strong>High:</strong> @stock.HighPrice<br />
+                            <strong>Low:</strong> @stock.LowPrice
                         </p>
                     </div>
                 </div>
@@ -35,24 +72,63 @@ else
 }
 
 @code {
-    private List<StockInfo> stocks;
+    private IEnumerable<StockDataDTO> stocks;
+    private int appUserId { get; set; }
+    private string inputTicker { get; set; }
+    private string sessionTicker { get; set; }
+    private StockRealTimeInfo? stockRealTimeInfo { get; set; } = null;
 
     protected override async Task OnInitializedAsync()
     {
-        stocks = new List<StockInfo>();
+        stocks = await StockDataService.GetStockData();
 
-        // Add your ticker symbols here
-        var tickers = new List<string> { "AAPL", "MSFT", "GOOGL" };
+        var authState = await ((ApiAuthenticationStateProvider)AuthenticationStateProvider).GetAuthenticationStateAsync();
+        var user = authState.User;
+        appUserId = Convert.ToInt32(user.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value);
+    }
 
-        foreach (var ticker in tickers)
+    private async Task SaveStockData()
+    {
+        if (stockRealTimeInfo is not null)
         {
-            var stock = await StockService.GetStockDataAsync(ticker);
-            stocks.Add(stock);
+            var response = await StockDataService.SaveStockData(new StockDataDTO {
+                Userid = appUserId
+                ,TickerSymbol = inputTicker
+                ,OpenPrice = stockRealTimeInfo.Open
+                ,ClosePrice = null
+                ,HighPrice = stockRealTimeInfo.High
+                ,LowPrice = stockRealTimeInfo.Low
+                ,DateCreated = DateOnly.FromDateTime(DateTime.Now)
+                ,CurrentPrice = stockRealTimeInfo.CurrentPrice
+                ,Change = stockRealTimeInfo.Change
+                ,PercentChange = stockRealTimeInfo.PercentChange
+                ,PreviousClose = stockRealTimeInfo.PreviousClose
+            });
+
+            if (response.Flag)
+            {
+                ResetSearch();
+            }
+        }
+    }
+    
+    private void ResetSearch()
+    {
+        inputTicker = "";
+        sessionTicker = "";
+        stockRealTimeInfo = null;
+    }
+    private async Task FetchStockData()
+    {
+        if (!string.IsNullOrWhiteSpace(inputTicker))
+        {
+            stockRealTimeInfo = await StockDataService.GetStockRealTimeData(inputTicker.Trim());
+            sessionTicker = inputTicker;
         }
     }
 
     private void NavigateToHistoricalData(string ticker)
     {
-        NavigationManager.NavigateTo($"/stocks/{ticker}/history");
+        NavigationManager.NavigateTo($"stocks/{ticker}/history");
     }
-} *@
+}

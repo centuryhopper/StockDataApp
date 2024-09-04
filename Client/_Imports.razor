@@ -14,9 +14,14 @@
 @using Blazored.LocalStorage
 @using Microsoft.JSInterop
 @using Client
+@using Client.Providers
 @using Client.Interfaces
 @using Client.Layout
 @using Shared.Models
 @using Newtonsoft.Json
+@using System.Security.Claims
+
 
 @inject IJSRuntime jsRuntime
+@inject AuthenticationStateProvider AuthenticationStateProvider
+

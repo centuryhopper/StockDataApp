@@ -19,7 +19,15 @@ public partial class Stockdatum
 
     public decimal? LowPrice { get; set; }
 
-    public DateOnly TradeDate { get; set; }
+    public DateOnly DateCreated { get; set; }
+
+    public decimal? CurrentPrice { get; set; }
+
+    public decimal? Delta { get; set; }
+
+    public decimal? PercentDelta { get; set; }
+
+    public decimal? PreviousClose { get; set; }
 
     public virtual Stockuser User { get; set; } = null!;
 }

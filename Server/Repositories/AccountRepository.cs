@@ -32,28 +32,31 @@ public class AccountRepository(StockDataDbContext stockDataDbContext, UserManage
             return new LoginResponse(false, null!, "Invalid email/password");
         }
 
-        var getUserRole = await userManager.GetRolesAsync(getUser);
-        var userSession = new UserSession(getUser.Id, getUser.UserName, getUser.Email, getUserRole.First());
-        string token = GenerateToken(userSession);
-
         // add user to stock user table if they arent in it already
-        if (await stockDataDbContext.Stockusers.FirstOrDefaultAsync(u => u.UmsUserid == userSession.Id) is null)
+        if (await stockDataDbContext.Stockusers.FirstOrDefaultAsync(u => u.UmsUserid == getUser.Id) is null)
         {
             try
             {
                 await stockDataDbContext.Stockusers.AddAsync(new Stockuser {
-                    UmsUserid = userSession.Id!
-                    ,Email = userSession.Email!
+                    UmsUserid = getUser.Id!
+                    ,Email = getUser.Email!
                     ,DateCreated = DateTime.Now
                     ,DateLastLogin = DateTime.Now
                     ,DateRetired = null
                 });
+                await stockDataDbContext.SaveChangesAsync();
             }
             catch (System.Exception ex)
             {
                 return new LoginResponse(false, null!, ex.Message);
             }
         }
+
+        var stockUser = await stockDataDbContext.Stockusers.FirstOrDefaultAsync(u=>u.UmsUserid == getUser.Id);
+
+        var getUserRole = await userManager.GetRolesAsync(getUser);
+        var userSession = new UserSession(stockUser.Userid, getUser.UserName, getUser.Email, getUserRole.First());
+        string token = GenerateToken(userSession);
 
 
         return new LoginResponse(true, token!, "Login completed");

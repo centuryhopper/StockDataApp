@@ -1,6 +1,5 @@
 @page "/parsed-claims"
 @using System.Security.Claims
-@inject AuthenticationStateProvider AuthenticationStateProvider
 
 @attribute [Authorize(Roles = "Admin, Normal_User")]
 
@@ -26,7 +25,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var authState = await ((ApiAuthenticationStateProvider)AuthenticationStateProvider).GetAuthenticationStateAsync();
         var user = authState.User;
 
         if (user.Identity.IsAuthenticated)

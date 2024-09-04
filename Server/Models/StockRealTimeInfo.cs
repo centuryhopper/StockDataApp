@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 namespace Shared.Models;
 
 
-public class StockInfo
+public class StockRealTimeInfo
 {
     [JsonProperty("c")]
     public decimal CurrentPrice { get; set; }

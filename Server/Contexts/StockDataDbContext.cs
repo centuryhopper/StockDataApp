@@ -31,6 +31,13 @@ public partial class StockDataDbContext : DbContext
             entity.Property(e => e.ClosePrice)
                 .HasPrecision(10, 2)
                 .HasColumnName("close_price");
+            entity.Property(e => e.CurrentPrice)
+                .HasPrecision(10, 2)
+                .HasColumnName("current_price");
+            entity.Property(e => e.DateCreated).HasColumnName("date_created");
+            entity.Property(e => e.Delta)
+                .HasPrecision(10, 2)
+                .HasColumnName("delta");
             entity.Property(e => e.HighPrice)
                 .HasPrecision(10, 2)
                 .HasColumnName("high_price");
@@ -40,10 +47,15 @@ public partial class StockDataDbContext : DbContext
             entity.Property(e => e.OpenPrice)
                 .HasPrecision(10, 2)
                 .HasColumnName("open_price");
+            entity.Property(e => e.PercentDelta)
+                .HasPrecision(10, 2)
+                .HasColumnName("percent_delta");
+            entity.Property(e => e.PreviousClose)
+                .HasPrecision(10, 2)
+                .HasColumnName("previous_close");
             entity.Property(e => e.TickerSymbol)
                 .HasMaxLength(10)
                 .HasColumnName("ticker_symbol");
-            entity.Property(e => e.TradeDate).HasColumnName("trade_date");
             entity.Property(e => e.Userid).HasColumnName("userid");
 
             entity.HasOne(d => d.User).WithMany(p => p.Stockdata)
