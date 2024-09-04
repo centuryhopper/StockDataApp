@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Blazored.LocalStorage;
@@ -45,7 +46,13 @@ public class StockDataService : IStockDataService
             throw new Exception("couldn't get data for this ticker symbol");
         }
 
+        if (response.StatusCode == HttpStatusCode.InternalServerError)
+        {
+            throw new Exception("rate limit exceeded for today");
+        }
+
         var historicalStockData = await response.Content.ReadFromJsonAsync<HistoricalStockData>();
+
         return historicalStockData;
     }
 

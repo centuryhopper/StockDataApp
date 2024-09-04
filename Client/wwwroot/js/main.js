@@ -4,6 +4,11 @@
 //     alert('hi')
 // });
 
+window.createChart = (chartData) => {
+    var ctx = document.getElementById('stockChart').getContext('2d');
+    new Chart(ctx, chartData);
+};
+
 
 function showHidePasswordField(fieldId)
 {

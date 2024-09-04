@@ -127,10 +127,16 @@ public class StockDataController : ControllerBase
             return BadRequest(ex.Message);
         }
 
-        HistoricalStockData historicalStockData = result.ToObject<HistoricalStockData>()!;
-
-
-        return Ok(historicalStockData);
+        try
+        {
+            HistoricalStockData historicalStockData = result.ToObject<HistoricalStockData>()!;
+            return Ok(historicalStockData);
+        }
+        catch (Exception ex)
+        {   
+            HistoricalStockDataRateLimit historicalStockDataRateLimit = result.ToObject<HistoricalStockDataRateLimit>()!;
+            return StatusCode(500, historicalStockDataRateLimit);
+        }
     }
 
     [HttpGet("stock-realtime-data")]

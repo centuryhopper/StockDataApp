@@ -1,26 +1,114 @@
-@* @page "/stocks/{ticker}/history"
-@inject StockService StockService
+@page "/stocks/{ticker}/history"
+@inject IStockDataService StockDataService
+@inject NavigationManager NavigationManager
 
-<h3>Historical Data for @ticker</h3>
+<h3>Historical Data for @Ticker</h3>
 
-@if (historicalData == null)
+<div>
+    <canvas id="stockChart" width="400" height="200"></canvas>
+</div>
+
+@* @if (HistoricalStockData == null)
 {
-    <p>Loading...</p>
+<p>Loading...</p>
 }
 else
 {
-    <!-- Display historical data here -->
-}
+<div>
+<canvas id="stockChart" width="400" height="200"></canvas>
+</div>
+} *@
 
 @code {
     [Parameter]
     public string Ticker { get; set; }
+    private List<DailyPrice> dailyPrices = new();
+    private List<string> labels = new();
+    private List<decimal> closingPrices = new();
+    private bool dataLoaded = false;
 
-    private HistoricalData historicalData;
+    private HistoricalStockData? HistoricalStockData;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && dataLoaded)
+        {
+            Console.WriteLine(labels.Count);
+            Console.WriteLine(closingPrices.Count);
+            // Define the minimum and maximum dates for the X-axis
+            var minDate = labels.Last(); // Oldest date (or set to a specific date)
+            var maxDate = labels.First(); // Most recent date (or set to a specific date)
+            var chartData = new
+            {
+                type = "line",
+                data = new
+                {
+                    labels = labels.ToArray(),
+                    datasets = new[]
+                        {
+                            new {
+                                label = "Closing Prices",
+                                data = closingPrices.ToArray(),
+                                backgroundColor = "rgba(75, 192, 192, 0.2)",
+                                borderColor = "rgba(75, 192, 192, 1)",
+                                borderWidth = 1,
+                                fill = false
+                            }
+                        }
+                },
+                options = new
+                {
+                    scales = new
+                    {
+                        x = new
+                        {
+                            type = "time",  // Use time scale for X-axis
+                            time = new
+                            {
+                                unit = "day", // Set the time unit (day, month, etc.)
+                                tooltipFormat = "MMM DD, YYYY", // Tooltip format for dates
+                                displayFormats = new
+                                {
+                                    day = "MMM DD" // Display format on the X-axis
+                                },
+                                min = minDate,  // Set the minimum date
+                                max = maxDate   // Set the maximum date
+                            }
+                        },
+                        y = new
+                        {
+                            beginAtZero = true,
+                            min = 0,
+                            max = 1000,
+                            ticks = new
+                            {
+                                stepSize = 100 // Optional: Set the interval between ticks
+                            }
+                        }
+                    }
+                }
+            };
+
+            await jsRuntime.InvokeVoidAsync("createChart", chartData);
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
+        Console.WriteLine("OnInitializedAsync");
         // Replace with actual service call to fetch historical data
-        historicalData = await StockService.GetHistoricalDataAsync(Ticker);
+        HistoricalStockData = await StockDataService.GetStockHistoricalData(Ticker);
+        foreach (var entry in HistoricalStockData?.DailyPrices ?? [])
+        {
+            var date = entry.Key;
+            var dailyPrice = entry.Value;
+            Console.WriteLine(date);
+            Console.WriteLine(dailyPrice.Close);
+            dailyPrices.Add(dailyPrice);
+            labels.Add(date);
+            closingPrices.Add(dailyPrice.Close);
+        }
+
+        dataLoaded = true;
     }
-} *@
+}

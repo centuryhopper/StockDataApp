@@ -60,8 +60,8 @@
     protected override async Task OnInitializedAsync()
     {
         //await jsRuntime.InvokeVoidAsync("showHidePasswordField", "show_hide_password");
-        HttpClient httpClient = httpClientFactory.CreateClient("API");
-        await httpClient.GetAsync("api/Account/nlog-test");
+        //HttpClient httpClient = httpClientFactory.CreateClient("API");
+        //await httpClient.GetAsync("api/Account/nlog-test");
     }
 
     private async Task HandleSubmit()
