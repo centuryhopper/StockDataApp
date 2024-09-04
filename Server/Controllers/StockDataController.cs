@@ -105,9 +105,10 @@ public class StockDataController : ControllerBase
     [HttpGet("historical-stock-data")]
     public async Task<IActionResult> GetHistoricalData([FromQuery] string tickerSymbol)
     {
+
         var apiUrl = webHostEnvironment.IsDevelopment() ?
         $"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={tickerSymbol}&apikey={configuration["Keys:ALPHA_VANTAGE_ApiKey"]}" :
-        $"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={tickerSymbol}&outputsize=full&apikey={configuration["Keys:ALPHA_VANTAGE_ApiKey"]}";
+        $"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={tickerSymbol}&outputsize=full&apikey={Environment.GetEnvironmentVariable("ALPHA_VANTAGE_ApiKey")}";
 
         JObject result;
 
@@ -137,7 +138,7 @@ public class StockDataController : ControllerBase
     {
         var apiUrl = webHostEnvironment.IsDevelopment() ?
         $"https://finnhub.io/api/v1/quote?symbol={tickerSymbol}&token={configuration["Keys:FinnHubApiKey"]}" :
-        $"https://finnhub.io/api/v1/quote?symbol={tickerSymbol}&token={Environment.GetEnvironmentVariable("Keys:FinnHubApiKey")}";
+        $"https://finnhub.io/api/v1/quote?symbol={tickerSymbol}&token={Environment.GetEnvironmentVariable("FinnHubApiKey")}";
 
         JObject result;
 
