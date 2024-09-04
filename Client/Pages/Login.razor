@@ -43,6 +43,8 @@
 </EditForm>
 
 @code {
+    [CascadingParameter]
+    public IModalService Modal { get; set; }
     private LoginDTO loginDTO = new();
     private bool isPasswordVisible = false;
     private string passwordType => isPasswordVisible ? "text" : "password";
@@ -63,6 +65,14 @@
     {
         // Handle login logic here
         var response = await accountService.LoginAsync(loginDTO);
+
+        if (!response.Flag)
+        {
+            var parameters = new ModalParameters();
+            parameters.Add(nameof(PopupDialog.Message), response.Message);
+            Modal.Show<PopupDialog>("Error", parameters);
+            return;
+        }
 
         NavigationManager.NavigateTo("parsed-claims", true);
     }

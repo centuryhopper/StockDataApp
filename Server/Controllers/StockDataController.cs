@@ -36,7 +36,7 @@ public class StockDataController : ControllerBase
 
     [HttpGet("admin_test")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> AdminTest()
+    public IActionResult AdminTest()
     {
         // var users = await userManager.Users.ToListAsync();
         var userId = Convert.ToInt32(User.Claims.First(c=>c.Type == ClaimTypes.NameIdentifier).Value);
@@ -45,7 +45,7 @@ public class StockDataController : ControllerBase
 
     [HttpGet("user_test")]
     [Authorize(Roles = "Normal_User")]
-    public async Task<IActionResult> UserTest()
+    public IActionResult UserTest()
     {
         var userId = Convert.ToInt32(User.Claims.First(c=>c.Type == ClaimTypes.NameIdentifier).Value);
         return Ok(userId);

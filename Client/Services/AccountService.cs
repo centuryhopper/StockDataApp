@@ -34,7 +34,8 @@ public class AccountService : IAccountService
         }
         if (string.IsNullOrWhiteSpace(loginResponse.Token))
         {
-            throw new Exception("Couldn't get a token");
+            // throw new Exception("Couldn't get a token");
+            return loginResponse;
         }
         await localStorageService.SetItemAsync("authToken", loginResponse!.Token);
         ((ApiAuthenticationStateProvider)authenticationStateProvider).MarkUserAsAuthenticated(loginResponse!.Token);
