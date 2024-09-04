@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Components.Forms
 @inject IAccountService accountService
 @inject NavigationManager NavigationManager
+@inject IHttpClientFactory httpClientFactory
 
 <h3>Login</h3>
 
@@ -59,6 +60,8 @@
     protected override async Task OnInitializedAsync()
     {
         //await jsRuntime.InvokeVoidAsync("showHidePasswordField", "show_hide_password");
+        HttpClient httpClient = httpClientFactory.CreateClient("API");
+        await httpClient.GetAsync("api/Account/nlog-test");
     }
 
     private async Task HandleSubmit()

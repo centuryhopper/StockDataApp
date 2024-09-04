@@ -9,7 +9,7 @@ namespace Server.Controllers;
 [ApiController]
 public class AccountController(IAccountRepository accountRepository, ILogger<AccountController> logger) : ControllerBase
 {
-    [HttpGet("serilog-test")]
+    [HttpGet("nlog-test")]
     public IActionResult Test()
     {
         logger.LogWarning("warning!");

@@ -11,7 +11,7 @@ using static Shared.Models.ServiceResponses;
 
 namespace Server.Repositories;
 
-public class AccountRepository(StockDataDbContext stockDataDbContext, UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager, IConfiguration configuration) : IAccountRepository
+public class AccountRepository(StockDataDbContext stockDataDbContext, UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager, IConfiguration configuration, IWebHostEnvironment webHostEnvironment) : IAccountRepository
 {
     public async Task<LoginResponse> LoginAccount(LoginDTO loginDTO)
     {
@@ -64,7 +64,7 @@ public class AccountRepository(StockDataDbContext stockDataDbContext, UserManage
 
     private string GenerateToken(UserSession user)
     {
-        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(webHostEnvironment.IsDevelopment() ? configuration["Jwt:Key"] : Environment.GetEnvironmentVariable("JWT_Key")));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
         var userClaims = new[]
         {
@@ -75,8 +75,8 @@ public class AccountRepository(StockDataDbContext stockDataDbContext, UserManage
         };
 
         var token = new JwtSecurityToken(
-            issuer: configuration["Jwt:Issuer"],
-            audience: configuration["Jwt:Audience"],
+            issuer: webHostEnvironment.IsDevelopment() ? configuration["Jwt:Issuer"] : Environment.GetEnvironmentVariable("Jwt_Issuer"),
+            audience: webHostEnvironment.IsDevelopment() ? configuration["Jwt:Audience"] : Environment.GetEnvironmentVariable("Jwt_Audience"),
             claims: userClaims,
             expires: DateTime.Now.AddDays(1),
             signingCredentials: credentials
