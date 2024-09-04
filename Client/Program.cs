@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Client;
-using Blazored.Modal;
+// using Blazored.Modal;
 using Microsoft.AspNetCore.Components.Authorization;
 using Client.Providers;
 using Blazored.LocalStorage;
@@ -33,7 +33,7 @@ builder.Services.AddScoped(
 builder.Services.AddBlazoredLocalStorageAsSingleton();
 
 
-builder.Services.AddBlazoredModal();
+// builder.Services.AddBlazoredModal();
 builder.Services.AddOptions();
 builder.Services.AddAuthorizationCore();
 builder.Services.AddScoped<AuthenticationStateProvider, ApiAuthenticationStateProvider>();
