@@ -62,17 +62,22 @@ else
                             <strong>Close:</strong> @stock.ClosePrice<br />
                             <strong>Previous Close:</strong> @stock.PreviousClose<br />
                             <strong>High:</strong> @stock.HighPrice<br />
-                            <strong>Low:</strong> @stock.LowPrice
+                            <strong>Low:</strong> @stock.LowPrice<br />
+                            <strong>Current:</strong> @stock.CurrentPrice<br />
+                            <strong>Change:</strong> @stock.Change<br />
+                            <strong>Percent Change:</strong> @stock.PercentChange<br />
                         </p>
                     </div>
                     <div class="card-footer d-flex justify-content-between">
-                        <Tooltip Title="Sync with Real-Time Data">
+                        <Tooltip Title="Sync With Real-Time Data">
                             <button class="btn btn-secondary" @onclick="()=>HandleUpdate(stock.TickerSymbol)">Sync</button>
                         </Tooltip>
-                        <div style="width: 2rem;"></div>
-                        <button class="btn btn-danger" @onclick="()=>HandleDelete(stock.StockDataId)">
-                            Delete
-                        </button>
+                        @* <div style="width: 0.5rem;"></div> *@
+                        <Tooltip Title="Remove This Stock From Your Records">
+                            <button class="btn btn-danger" @onclick="()=>HandleDelete(stock.StockDataId)">
+                                Delete
+                            </button>
+                        </Tooltip>
                     </div>
                 </div>
             </div>
@@ -113,12 +118,15 @@ else
     {
         // TODO: add warning before delete
         var confirmed = await confirmModal!.ShowAsync();
-        Console.WriteLine(confirmed);
-        //var response = await StockDataService.DeleteStockData(stockDataId);
-        //if (response.Flag)
-        //{
-        //    NavigationManager.NavigateTo("refresh/stock-data");
-        //}
+        //Console.WriteLine(confirmed);
+        if (confirmed)
+        {
+            var response = await StockDataService.DeleteStockData(stockDataId);
+            if (response.Flag)
+            {
+                NavigationManager.NavigateTo("refresh/stock-data");
+            }
+        }
         
     }
 
