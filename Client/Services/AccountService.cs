@@ -26,6 +26,7 @@ public class AccountService : IAccountService
     
     public async Task<LoginResponse> LoginAsync(LoginDTO loginDTO)
     {
+        System.Console.WriteLine("logging in");
         var response = await httpClient.PostAsJsonAsync("api/Account/login", loginDTO);
         var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
         if (!response.IsSuccessStatusCode)
