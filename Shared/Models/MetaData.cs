@@ -19,4 +19,9 @@ public class MetaData
 
     [JsonProperty("5. Time Zone")]
     public string TimeZone { get; set; }
+
+    public override string ToString()
+    {
+        return $"{nameof(Information)}:{Information}, {nameof(Symbol)}:{Symbol}, {nameof(LastRefreshed)}:{LastRefreshed}, {nameof(OutputSize)}:{OutputSize}, {nameof(TimeZone)}:{TimeZone},";
+    }
 }

@@ -8,7 +8,7 @@
 <form @onsubmit="FetchStockData">
     <div class="form-group">
         <label for="tickerInput" class="m-3">Enter Ticker Symbol:</label>
-        <input type="text" maxlength="4" class="form-control" id="tickerInput" @bind="inputTicker"
+        <input type="text" maxlength="4" class="form-control" id="tickerInput" style="text-transform: uppercase;" @bind="inputTicker"
             placeholder="E.g., AAPL, MSFT" />
     </div>
     <button type="submit" class="btn btn-primary mt-3 mb-3">Get Real-Time Data</button>
@@ -20,7 +20,7 @@
         <div class="card mb-3">
             <div class="card-body">
                 <h5 class="card-title">
-                    @inputTicker
+                    @InputTicker
                 </h5>
                 <p class="card-text">
                     <strong>Current:</strong> @stockRealTimeInfo.CurrentPrice<br />
@@ -65,18 +65,40 @@ else
                             <strong>Low:</strong> @stock.LowPrice
                         </p>
                     </div>
+                    <div class="card-footer d-flex justify-content-between">
+                        <Tooltip Title="Sync with Real-Time Data">
+                            <button class="btn btn-secondary" @onclick="()=>HandleUpdate(stock.TickerSymbol)">Sync</button>
+                        </Tooltip>
+                        <div style="width: 2rem;"></div>
+                        <button class="btn btn-danger" @onclick="()=>HandleDelete(stock.StockDataId)">
+                            Delete
+                        </button>
+                    </div>
                 </div>
             </div>
         }
     </div>
 }
 
+<ConfirmModal @ref="confirmModal"
+    Title="Delete Confirmation"
+    BodyText="Are you sure you want to delete this item?" />
+
+
+
 @code {
     private IEnumerable<StockDataDTO> stocks;
     private int appUserId { get; set; }
-    private string inputTicker { get; set; }
+    private string inputTicker { get; set; } = string.Empty;
+    private string InputTicker
+    {
+        get => inputTicker.ToUpper(); // return uppercase for the bound value
+    }
+
     private string sessionTicker { get; set; }
     private StockRealTimeInfo? stockRealTimeInfo { get; set; } = null;
+    private ConfirmModal confirmModal = default!;
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -87,13 +109,38 @@ else
         appUserId = Convert.ToInt32(user.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value);
     }
 
+    private async Task HandleDelete(int stockDataId)
+    {
+        // TODO: add warning before delete
+        var confirmed = await confirmModal!.ShowAsync();
+        Console.WriteLine(confirmed);
+        //var response = await StockDataService.DeleteStockData(stockDataId);
+        //if (response.Flag)
+        //{
+        //    NavigationManager.NavigateTo("refresh/stock-data");
+        //}
+        
+    }
+
+    private async Task HandleUpdate(string tickerSymbol)
+    {
+        var realTimeInfo = await StockDataService.GetStockRealTimeData(tickerSymbol.Trim());
+        
+        // convert stockrealtimeinfo to stockDataDTO
+        var response = await StockDataService.UpdateStockData(tickerSymbol.Trim(), realTimeInfo);
+        if (response.Flag)
+        {
+            NavigationManager.NavigateTo("refresh/stock-data");
+        }
+    }
+
     private async Task SaveStockData()
     {
         if (stockRealTimeInfo is not null)
         {
             var response = await StockDataService.SaveStockData(new StockDataDTO {
                 Userid = appUserId
-                ,TickerSymbol = inputTicker
+                ,TickerSymbol = InputTicker
                 ,OpenPrice = stockRealTimeInfo.Open
                 ,ClosePrice = null
                 ,HighPrice = stockRealTimeInfo.High
@@ -121,10 +168,10 @@ else
     }
     private async Task FetchStockData()
     {
-        if (!string.IsNullOrWhiteSpace(inputTicker))
+        if (!string.IsNullOrWhiteSpace(InputTicker))
         {
-            stockRealTimeInfo = await StockDataService.GetStockRealTimeData(inputTicker.Trim());
-            sessionTicker = inputTicker;
+            stockRealTimeInfo = await StockDataService.GetStockRealTimeData(InputTicker.Trim());
+            sessionTicker = InputTicker;
         }
     }
 

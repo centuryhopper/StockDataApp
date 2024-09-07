@@ -21,6 +21,39 @@ public class StockDataService : IStockDataService
         httpClient = httpClientFactory.CreateClient("API");
         this.localStorageService = localStorageService;
     }
+
+    public async Task<GeneralResponse> UpdateStockData(string tickerSymbol, StockRealTimeInfo stockRealTimeInfo)
+    {
+        var getCurrentStockDataResponse = await httpClient.GetAsync($"api/StockData/get-stock-by-ticker/{tickerSymbol}");
+        if (!getCurrentStockDataResponse.IsSuccessStatusCode)
+        {
+            var feedback = await getCurrentStockDataResponse.Content.ReadAsStringAsync();
+            return new GeneralResponse(false, feedback);
+        }
+
+
+        var stockData = await getCurrentStockDataResponse.Content.ReadFromJsonAsync<StockDataDTO>();
+        stockData!.CurrentPrice = stockRealTimeInfo.CurrentPrice;
+        // System.Console.WriteLine(stockData.TickerSymbol);
+        // System.Console.WriteLine(stockData.StockDataId);
+        stockData.Change = stockRealTimeInfo.Change;
+        stockData.PercentChange = stockRealTimeInfo.PercentChange;
+        stockData.HighPrice = stockRealTimeInfo.High;
+        stockData.LowPrice = stockRealTimeInfo.Low;
+        stockData.OpenPrice = stockRealTimeInfo.Open;
+        stockData.PreviousClose = stockRealTimeInfo.PreviousClose;
+
+        var response = await httpClient.PutAsJsonAsync("api/StockData/update-stock-data", stockData);
+
+        var data = await response.Content.ReadFromJsonAsync<GeneralResponse>();
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new Exception(data.Message);
+        }
+
+        return data!;   
+
+    }
     
     public async Task<IEnumerable<StockDataDTO>> GetStockData()
     {
@@ -78,5 +111,17 @@ public class StockDataService : IStockDataService
         }
 
         return data!;        
+    }
+
+    public async Task<GeneralResponse> DeleteStockData(int stockDataId)
+    {
+        var response = await httpClient.DeleteAsync($"api/StockData/delete-stock-data/{stockDataId}");
+        var data = await response.Content.ReadFromJsonAsync<GeneralResponse>();
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new Exception(data.Message);
+        }
+
+        return data!; 
     }
 }

@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using static Shared.Models.ServiceResponses;
+using System.Runtime.Intrinsics.X86;
 
 namespace Server.Controllers;
 
@@ -39,7 +40,7 @@ public class StockDataController : ControllerBase
     public IActionResult AdminTest()
     {
         // var users = await userManager.Users.ToListAsync();
-        var userId = Convert.ToInt32(User.Claims.First(c=>c.Type == ClaimTypes.NameIdentifier).Value);
+        var userId = Convert.ToInt32(User.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value);
         return Ok(userId);
     }
 
@@ -47,7 +48,7 @@ public class StockDataController : ControllerBase
     [Authorize(Roles = "Normal_User")]
     public IActionResult UserTest()
     {
-        var userId = Convert.ToInt32(User.Claims.First(c=>c.Type == ClaimTypes.NameIdentifier).Value);
+        var userId = Convert.ToInt32(User.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value);
         return Ok(userId);
     }
 
@@ -57,20 +58,34 @@ public class StockDataController : ControllerBase
     {
         try
         {
-            await stockDataDbContext.Stockdata.AddAsync(new Stockdatum {
-                Userid = stockDataDTO.Userid
-                ,TickerSymbol = stockDataDTO.TickerSymbol
-                ,OpenPrice = stockDataDTO.OpenPrice
-                ,ClosePrice = stockDataDTO.ClosePrice
-                ,HighPrice = stockDataDTO.HighPrice
-                ,LowPrice = stockDataDTO.LowPrice
-                ,DateCreated = stockDataDTO.DateCreated
-                ,CurrentPrice = stockDataDTO.CurrentPrice
-                ,Delta = stockDataDTO.Change
-                ,PercentDelta = stockDataDTO.PercentChange
-                ,PreviousClose = stockDataDTO.PreviousClose
-            });
-            await stockDataDbContext.SaveChangesAsync();
+            if (await stockDataDbContext.Stockdata.FirstOrDefaultAsync(s => s.TickerSymbol == stockDataDTO.TickerSymbol) is null)
+            {
+                await stockDataDbContext.Stockdata.AddAsync(new Stockdatum
+                {
+                    Userid = stockDataDTO.Userid
+                    ,
+                    TickerSymbol = stockDataDTO.TickerSymbol
+                    ,
+                    OpenPrice = stockDataDTO.OpenPrice
+                    ,
+                    ClosePrice = stockDataDTO.ClosePrice
+                    ,
+                    HighPrice = stockDataDTO.HighPrice
+                    ,
+                    LowPrice = stockDataDTO.LowPrice
+                    ,
+                    DateCreated = stockDataDTO.DateCreated
+                    ,
+                    CurrentPrice = stockDataDTO.CurrentPrice
+                    ,
+                    Delta = stockDataDTO.Change
+                    ,
+                    PercentDelta = stockDataDTO.PercentChange
+                    ,
+                    PreviousClose = stockDataDTO.PreviousClose
+                });
+                await stockDataDbContext.SaveChangesAsync();
+            }
         }
         catch (System.Exception ex)
         {
@@ -84,31 +99,81 @@ public class StockDataController : ControllerBase
     [Authorize(Roles = "Admin,Normal_User")]
     public async Task<IActionResult> GetStoredStockData()
     {
-        var userId = Convert.ToInt32(User.Claims.First(c=>c.Type == ClaimTypes.NameIdentifier).Value);
-        var stockDataLst = await stockDataDbContext.Stockdata.Where(s=>s.Userid == userId).Select(s=>new StockDataDTO{
-            Userid = s.Userid
-            ,TickerSymbol = s.TickerSymbol
-            ,OpenPrice = s.OpenPrice
-            ,ClosePrice = s.ClosePrice
-            ,HighPrice = s.HighPrice
-            ,LowPrice = s.LowPrice
-            ,DateCreated = s.DateCreated
-            ,CurrentPrice = s.CurrentPrice
-            ,Change = s.Delta
-            ,PercentChange = s.PercentDelta
-            ,PreviousClose = s.PreviousClose
+        var userId = Convert.ToInt32(User.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value);
+        var stockDataLst = await stockDataDbContext.Stockdata.Where(s => s.Userid == userId).Select(s => new StockDataDTO
+        {
+            StockDataId = s.Stockdataid,
+            Userid = s.Userid,
+            TickerSymbol = s.TickerSymbol,
+            OpenPrice = s.OpenPrice,
+            ClosePrice = s.ClosePrice,
+            HighPrice = s.HighPrice,
+            LowPrice = s.LowPrice,
+            DateCreated = s.DateCreated,
+            CurrentPrice = s.CurrentPrice,
+            Change = s.Delta,
+            PercentChange = s.PercentDelta,
+            PreviousClose = s.PreviousClose,
         }).ToListAsync();
 
         return Ok(stockDataLst);
     }
 
+    [HttpGet("get-stock-by-ticker/{tickerSymbol}")]
+    public async Task<IActionResult> GetStockDataByTicker(string tickerSymbol)
+    {
+        var stockData = await stockDataDbContext.Stockdata.FirstOrDefaultAsync(s=>s.TickerSymbol == tickerSymbol);
+        if (stockData is null)
+        {
+            return BadRequest("ticker not found in the database");
+        }
+
+        // System.Console.WriteLine(stockData.TickerSymbol);
+        // System.Console.WriteLine(stockData.Stockdataid);
+
+        return Ok(new StockDataDTO {
+            StockDataId = stockData.Stockdataid,
+            Userid = stockData.Userid,
+            TickerSymbol = stockData.TickerSymbol,
+            OpenPrice = stockData.OpenPrice,
+            ClosePrice = stockData.ClosePrice,
+            HighPrice = stockData.HighPrice,
+            LowPrice = stockData.LowPrice,
+            DateCreated = stockData.DateCreated,
+            CurrentPrice = stockData.CurrentPrice,
+            Change = stockData.Delta,
+            PercentChange = stockData.PercentDelta,
+            PreviousClose = stockData.PreviousClose,
+        });
+    }
+
+    [HttpPut("update-stock-data")]
+    [Authorize(Roles = "Admin,Normal_User")]
+    public async Task<IActionResult> UpdateStockData([FromBody] StockDataDTO stockDataDTO)
+    {
+        var stockData = await stockDataDbContext.Stockdata.FindAsync(stockDataDTO.StockDataId);
+        if (stockData is null)
+        {
+            return BadRequest(new GeneralResponse(false, "Couldn't find the stock you're trying to update"));
+        }
+        stockData.CurrentPrice = stockDataDTO.CurrentPrice;
+        stockData.Delta = stockDataDTO.Change;
+        stockData.PercentDelta = stockDataDTO.PercentChange;
+        stockData.OpenPrice = stockDataDTO.OpenPrice;
+        stockData.PreviousClose = stockDataDTO.PreviousClose;
+        stockData.HighPrice = stockDataDTO.HighPrice;
+        stockData.LowPrice = stockDataDTO.LowPrice;
+        await stockDataDbContext.SaveChangesAsync();
+
+        return Ok(new GeneralResponse(true, "Stock Updated!"));
+    }
+
     [HttpGet("historical-stock-data")]
     public async Task<IActionResult> GetHistoricalData([FromQuery] string tickerSymbol)
     {
+        var apiUrl = string.Format("https://www.alphavantage.co/query?function=TIME_SERIES_MONTHLY_ADJUSTED&symbol={0}&apikey={1}", tickerSymbol, webHostEnvironment.IsDevelopment() ? configuration["Keys:ALPHA_VANTAGE_ApiKey"] : Environment.GetEnvironmentVariable("ALPHA_VANTAGE_ApiKey"));
 
-        var apiUrl = webHostEnvironment.IsDevelopment() ?
-        $"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={tickerSymbol}&apikey={configuration["Keys:ALPHA_VANTAGE_ApiKey"]}" :
-        $"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={tickerSymbol}&outputsize=full&apikey={Environment.GetEnvironmentVariable("ALPHA_VANTAGE_ApiKey")}";
+        // $"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={tickerSymbol}&outputsize=full&apikey={Environment.GetEnvironmentVariable("ALPHA_VANTAGE_ApiKey")}";
 
         JObject result;
 
@@ -130,13 +195,31 @@ public class StockDataController : ControllerBase
         try
         {
             HistoricalStockData historicalStockData = result.ToObject<HistoricalStockData>()!;
+            // System.Console.WriteLine(historicalStockData.MetaData);
+            // historicalStockData.DailyPrices.ToList().ForEach((KeyValuePair<string, DailyPrice> kvp)=>System.Console.WriteLine(kvp.Key));
             return Ok(historicalStockData);
         }
         catch (Exception ex)
-        {   
+        {
             HistoricalStockDataRateLimit historicalStockDataRateLimit = result.ToObject<HistoricalStockDataRateLimit>()!;
+            System.Console.WriteLine(historicalStockDataRateLimit.Information);
             return StatusCode(500, historicalStockDataRateLimit);
         }
+    }
+
+    [HttpDelete("delete-stock-data/{stockDataId:int}")]
+    public async Task<ActionResult> DeleteAsync(int stockDataId)
+    {
+        var stockData = await stockDataDbContext.Stockdata.FindAsync(stockDataId);
+        if (stockData == null)
+        {
+            return BadRequest(new GeneralResponse(false, "Stock not found"));
+        }
+
+        stockDataDbContext.Stockdata.Remove(stockData);
+        await stockDataDbContext.SaveChangesAsync();
+
+        return Ok(new GeneralResponse(true, "Stock Deleted!"));
     }
 
     [HttpGet("stock-realtime-data")]

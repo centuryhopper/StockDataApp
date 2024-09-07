@@ -16,6 +16,17 @@ public class DailyPrice
     [JsonProperty("4. close")]
     public decimal Close { get; set; }
 
-    [JsonProperty("5. volume")]
+    [JsonProperty("5. adjusted close")]
+    public decimal AdjustedClose { get; set; }
+
+    [JsonProperty("6. volume")]
     public long Volume { get; set; }
+
+    [JsonProperty("7. dividend amount")]
+    public long DividendAmount { get; set; }
+
+    public override string ToString()
+    {
+        return $"{nameof(Open)}:{Open}, {nameof(High)}:{High}, {nameof(Low)}:{Low}, {nameof(Close)}:{Close}, {nameof(Volume)}:{Volume},";
+    }
 }

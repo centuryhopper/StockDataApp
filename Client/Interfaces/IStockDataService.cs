@@ -9,6 +9,8 @@ public interface IStockDataService
     Task<StockRealTimeInfo?> GetStockRealTimeData(string tickerSymbol);
     Task<HistoricalStockData?> GetStockHistoricalData(string tickerSymbol);
     Task<GeneralResponse> SaveStockData(StockDataDTO stockDataDTO);
+    Task<GeneralResponse> UpdateStockData(string tickerSymbol, StockRealTimeInfo stockRealTimeInfo);
+    Task<GeneralResponse> DeleteStockData(int stockDataId);
 }
 
 

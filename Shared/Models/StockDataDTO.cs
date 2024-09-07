@@ -4,6 +4,7 @@ namespace Shared.Models;
 
 public class StockDataDTO
 {
+    public int StockDataId { get; set; }
     public int Userid { get; set; }
     public string TickerSymbol { get; set; } = null!;
     public decimal? OpenPrice { get; set; }
@@ -15,4 +16,9 @@ public class StockDataDTO
     public decimal? Change { get; set; }
     public decimal? PercentChange { get; set; }
     public decimal? PreviousClose { get; set; }
+
+    public override string ToString()
+    {
+        return $"";
+    }
 }

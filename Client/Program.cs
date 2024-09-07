@@ -8,6 +8,7 @@ using Blazored.LocalStorage;
 using Client.Interfaces;
 using Client.Services;
 using Client.Handlers;
+using Radzen;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -33,6 +34,7 @@ builder.Services.AddScoped(
 builder.Services.AddBlazoredLocalStorageAsSingleton();
 
 
+builder.Services.AddBlazorBootstrap();
 // builder.Services.AddBlazoredModal();
 builder.Services.AddOptions();
 builder.Services.AddAuthorizationCore();

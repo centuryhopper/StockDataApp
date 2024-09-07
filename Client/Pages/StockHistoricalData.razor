@@ -4,111 +4,101 @@
 
 <h3>Historical Data for @Ticker</h3>
 
-<div>
-    <canvas id="stockChart" width="400" height="200"></canvas>
+<div class="container-fluid overflow-x-auto">
+    <LineChart @ref="lineChart" Width="800" />
 </div>
 
-@* @if (HistoricalStockData == null)
-{
-<p>Loading...</p>
-}
-else
-{
-<div>
-<canvas id="stockChart" width="400" height="200"></canvas>
-</div>
-} *@
+
 
 @code {
     [Parameter]
     public string Ticker { get; set; }
     private List<DailyPrice> dailyPrices = new();
     private List<string> labels = new();
-    private List<decimal> closingPrices = new();
-    private bool dataLoaded = false;
+    private List<double?> closingPrices = new();
 
     private HistoricalStockData? HistoricalStockData;
+    private LineChart lineChart = default!;
+    private LineChartOptions lineChartOptions = default!;
+    private ChartData chartData = default!;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender && dataLoaded)
-        {
-            Console.WriteLine(labels.Count);
-            Console.WriteLine(closingPrices.Count);
-            // Define the minimum and maximum dates for the X-axis
-            var minDate = labels.Last(); // Oldest date (or set to a specific date)
-            var maxDate = labels.First(); // Most recent date (or set to a specific date)
-            var chartData = new
-            {
-                type = "line",
-                data = new
-                {
-                    labels = labels.ToArray(),
-                    datasets = new[]
-                        {
-                            new {
-                                label = "Closing Prices",
-                                data = closingPrices.ToArray(),
-                                backgroundColor = "rgba(75, 192, 192, 0.2)",
-                                borderColor = "rgba(75, 192, 192, 1)",
-                                borderWidth = 1,
-                                fill = false
-                            }
-                        }
-                },
-                options = new
-                {
-                    scales = new
-                    {
-                        x = new
-                        {
-                            type = "time",  // Use time scale for X-axis
-                            time = new
-                            {
-                                unit = "day", // Set the time unit (day, month, etc.)
-                                tooltipFormat = "MMM DD, YYYY", // Tooltip format for dates
-                                displayFormats = new
-                                {
-                                    day = "MMM DD" // Display format on the X-axis
-                                },
-                                min = minDate,  // Set the minimum date
-                                max = maxDate   // Set the maximum date
-                            }
-                        },
-                        y = new
-                        {
-                            beginAtZero = true,
-                            min = 0,
-                            max = 1000,
-                            ticks = new
-                            {
-                                stepSize = 100 // Optional: Set the interval between ticks
-                            }
-                        }
-                    }
-                }
-            };
+    private bool gotData = false;
 
-            await jsRuntime.InvokeVoidAsync("createChart", chartData);
-        }
-    }
-
+// TODO: cache the data in localstorage so that we dont have to make api call everytime we load the page (helps minimize number of api calls per day)
     protected override async Task OnInitializedAsync()
     {
-        Console.WriteLine("OnInitializedAsync");
+        //Console.WriteLine("OnInitializedAsync");
         // Replace with actual service call to fetch historical data
         HistoricalStockData = await StockDataService.GetStockHistoricalData(Ticker);
+        Console.WriteLine(HistoricalStockData);
+        
         foreach (var entry in HistoricalStockData?.DailyPrices ?? [])
         {
             var date = entry.Key;
+            var year = DateOnly.Parse(date).Year;
+            var month = DateOnly.Parse(date).Month;
+            var day = DateOnly.Parse(date).Day;
+            
+            if (DateOnly.Parse(date).Year != DateTime.Now.Year)
+            {
+                continue;
+            }
+
             var dailyPrice = entry.Value;
-            Console.WriteLine(date);
-            Console.WriteLine(dailyPrice.Close);
+            //Console.WriteLine(date);
+            //Console.WriteLine(dailyPrice.AdjustedClose);
             dailyPrices.Add(dailyPrice);
-            labels.Add(date);
-            closingPrices.Add(dailyPrice.Close);
+            //labels.Add(date);
+            closingPrices.Add((double) dailyPrice.AdjustedClose);
+            Console.WriteLine(date);
         }
 
-        dataLoaded = true;
+        closingPrices.ForEach(cp=>Console.WriteLine(cp));
+        // json comes in backwards so we reverse it to match the labeling
+        closingPrices.Reverse();
+
+
+        var colors = ColorUtility.CategoricalTwelveColors;
+
+        var labels = new List<string> { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
+        var datasets = new List<IChartDataset>();
+
+        var tickerDataSet = new LineChartDataset
+            {
+                Label = Ticker,
+                Data = closingPrices,
+                BackgroundColor = colors[0],
+                BorderColor = colors[0],
+                BorderWidth = 2,
+                HoverBorderWidth = 4,
+                // PointBackgroundColor = colors[0],
+                // PointRadius = 0, // hide points
+                // PointHoverRadius = 4,
+            };
+        datasets.Add(tickerDataSet);
+
+        chartData = new ChartData { Labels = labels, Datasets = datasets };
+
+        lineChartOptions = new();
+        lineChartOptions.Responsive = true;
+        lineChartOptions.Interaction = new Interaction { Mode = InteractionMode.Index };
+
+        lineChartOptions.Scales.X!.Title = new ChartAxesTitle { Text = DateTime.Now.Year.ToString(), Display = true };
+        lineChartOptions.Scales.Y!.Title = new ChartAxesTitle { Text = "Dollars per Share", Display = true };
+        //lineChartOptions.Scales.Y!.Max = 5000;
+
+        lineChartOptions.Plugins.Title!.Text = "Stock Historical Progress";
+        lineChartOptions.Plugins.Title.Display = true;
+
+        gotData = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender && gotData)
+        {
+            await lineChart.InitializeAsync(chartData, lineChartOptions);
+        }
+        await base.OnAfterRenderAsync(firstRender);
     }
 }
