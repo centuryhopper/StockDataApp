@@ -62,26 +62,16 @@ public class StockDataController : ControllerBase
             {
                 await stockDataDbContext.Stockdata.AddAsync(new Stockdatum
                 {
-                    Userid = stockDataDTO.Userid
-                    ,
-                    TickerSymbol = stockDataDTO.TickerSymbol
-                    ,
-                    OpenPrice = stockDataDTO.OpenPrice
-                    ,
-                    ClosePrice = stockDataDTO.ClosePrice
-                    ,
-                    HighPrice = stockDataDTO.HighPrice
-                    ,
-                    LowPrice = stockDataDTO.LowPrice
-                    ,
-                    DateCreated = stockDataDTO.DateCreated
-                    ,
-                    CurrentPrice = stockDataDTO.CurrentPrice
-                    ,
-                    Delta = stockDataDTO.Change
-                    ,
-                    PercentDelta = stockDataDTO.PercentChange
-                    ,
+                    Userid = stockDataDTO.Userid,
+                    TickerSymbol = stockDataDTO.TickerSymbol,
+                    OpenPrice = stockDataDTO.OpenPrice,
+                    ClosePrice = stockDataDTO.ClosePrice,
+                    HighPrice = stockDataDTO.HighPrice,
+                    LowPrice = stockDataDTO.LowPrice,
+                    DateCreated = stockDataDTO.DateCreated,
+                    CurrentPrice = stockDataDTO.CurrentPrice,
+                    Delta = stockDataDTO.Change,
+                    PercentDelta = stockDataDTO.PercentChange,
                     PreviousClose = stockDataDTO.PreviousClose
                 });
                 await stockDataDbContext.SaveChangesAsync();
@@ -122,7 +112,7 @@ public class StockDataController : ControllerBase
     [HttpGet("get-stock-by-ticker/{tickerSymbol}")]
     public async Task<IActionResult> GetStockDataByTicker(string tickerSymbol)
     {
-        var stockData = await stockDataDbContext.Stockdata.FirstOrDefaultAsync(s=>s.TickerSymbol == tickerSymbol);
+        var stockData = await stockDataDbContext.Stockdata.FirstOrDefaultAsync(s => s.TickerSymbol == tickerSymbol);
         if (stockData is null)
         {
             return BadRequest("ticker not found in the database");
@@ -131,7 +121,8 @@ public class StockDataController : ControllerBase
         // System.Console.WriteLine(stockData.TickerSymbol);
         // System.Console.WriteLine(stockData.Stockdataid);
 
-        return Ok(new StockDataDTO {
+        return Ok(new StockDataDTO
+        {
             StockDataId = stockData.Stockdataid,
             Userid = stockData.Userid,
             TickerSymbol = stockData.TickerSymbol,
@@ -173,10 +164,8 @@ public class StockDataController : ControllerBase
     {
         var apiUrl = string.Format("https://www.alphavantage.co/query?function=TIME_SERIES_MONTHLY_ADJUSTED&symbol={0}&apikey={1}", tickerSymbol, webHostEnvironment.IsDevelopment() ? configuration["Keys:ALPHA_VANTAGE_ApiKey"] : Environment.GetEnvironmentVariable("ALPHA_VANTAGE_ApiKey"));
 
-        // $"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={tickerSymbol}&outputsize=full&apikey={Environment.GetEnvironmentVariable("ALPHA_VANTAGE_ApiKey")}";
-
-        JObject result;
-
+        HistoricalStockData result;
+        string? responseString = "";
         try
         {
             var response = await httpClient.GetAsync(apiUrl);
@@ -184,27 +173,26 @@ public class StockDataController : ControllerBase
             {
                 throw new Exception("response was not successful");
             }
-            var responseString = await response.Content.ReadAsStringAsync();
-            result = JObject.Parse(responseString);
+            responseString = await response.Content.ReadAsStringAsync();
+            // System.Console.WriteLine(responseString);
+            // System.Console.WriteLine("before deserialize");
+            result = JsonConvert.DeserializeObject<HistoricalStockData>(responseString);
+            // System.Console.WriteLine(result is null);
         }
-        catch (System.Exception ex)
+        catch (JsonException ex)
         {
-            return BadRequest(ex.Message);
-        }
-
-        try
-        {
-            HistoricalStockData historicalStockData = result.ToObject<HistoricalStockData>()!;
-            // System.Console.WriteLine(historicalStockData.MetaData);
-            // historicalStockData.DailyPrices.ToList().ForEach((KeyValuePair<string, DailyPrice> kvp)=>System.Console.WriteLine(kvp.Key));
-            return Ok(historicalStockData);
+            // System.Console.WriteLine(ex.Message);
+            HistoricalStockDataRateLimit historicalStockDataRateLimit = JsonConvert.DeserializeObject<HistoricalStockDataRateLimit>(responseString!);
+            // System.Console.WriteLine(historicalStockDataRateLimit.Information);
+            return StatusCode(500, historicalStockDataRateLimit);
         }
         catch (Exception ex)
         {
-            HistoricalStockDataRateLimit historicalStockDataRateLimit = result.ToObject<HistoricalStockDataRateLimit>()!;
-            System.Console.WriteLine(historicalStockDataRateLimit.Information);
-            return StatusCode(500, historicalStockDataRateLimit);
+            // System.Console.WriteLine(ex.Message);
+            return BadRequest(ex.Message);
         }
+
+        return Ok(result);
     }
 
     [HttpDelete("delete-stock-data/{stockDataId:int}")]
@@ -225,9 +213,7 @@ public class StockDataController : ControllerBase
     [HttpGet("stock-realtime-data")]
     public async Task<IActionResult> GetData([FromQuery] string tickerSymbol)
     {
-        var apiUrl = webHostEnvironment.IsDevelopment() ?
-        $"https://finnhub.io/api/v1/quote?symbol={tickerSymbol}&token={configuration["Keys:FinnHubApiKey"]}" :
-        $"https://finnhub.io/api/v1/quote?symbol={tickerSymbol}&token={Environment.GetEnvironmentVariable("FinnHubApiKey")}";
+        var apiUrl = string.Format("https://finnhub.io/api/v1/quote?symbol={0}&token={1}", tickerSymbol, webHostEnvironment.IsDevelopment() ? configuration["Keys:FinnHubApiKey"] : Environment.GetEnvironmentVariable("FinnHubApiKey"));
 
         JObject result;
 

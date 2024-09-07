@@ -23,10 +23,6 @@ public class DailyPrice
     public long Volume { get; set; }
 
     [JsonProperty("7. dividend amount")]
-    public long DividendAmount { get; set; }
+    public decimal DividendAmount { get; set; }
 
-    public override string ToString()
-    {
-        return $"{nameof(Open)}:{Open}, {nameof(High)}:{High}, {nameof(Low)}:{Low}, {nameof(Close)}:{Close}, {nameof(Volume)}:{Volume},";
-    }
 }

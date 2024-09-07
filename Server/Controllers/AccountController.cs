@@ -24,7 +24,7 @@ public class AccountController(IAccountRepository accountRepository, ILogger<Acc
     public async Task<IActionResult> Login(LoginDTO loginDTO)
     {
         var response = await accountRepository.LoginAccount(loginDTO);
-        logger.LogInformation(response.Message);
+        //logger.LogInformation(response.Message);
         return Ok(response);
     }
 }
