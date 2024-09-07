@@ -3,7 +3,7 @@
 /*
 
 
-dotnet ef dbcontext scaffold "INSERT_CONNECTION_STRING_HERE" Npgsql.EntityFrameworkCore.PostgreSQL -t stockeruser -t stockdata -o Contexts -f -c StockDataDbContext
+dotnet ef dbcontext scaffold "Name=ConnectionStrings:StockDataDB" Npgsql.EntityFrameworkCore.PostgreSQL -t stockuser -o Entities -t stockdata -o Entities -c StockDataDbContext --context-dir Contexts -f
 
 to test api in swagger:
     run "dotnet watch run"

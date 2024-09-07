@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Shared.Models;
 using Newtonsoft.Json.Linq;
-using System.Runtime.InteropServices.Marshalling;
 using Newtonsoft.Json;
 using Microsoft.AspNetCore.Identity;
 using Server.Contexts;
@@ -9,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using static Shared.Models.ServiceResponses;
-using System.Runtime.Intrinsics.X86;
+using Server.Entities;
 
 namespace Server.Controllers;
 

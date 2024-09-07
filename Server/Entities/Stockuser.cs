@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Server.Contexts;
+namespace Server.Entities;
 
 public partial class Stockuser
 {
