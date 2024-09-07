@@ -1,7 +1,7 @@
 
 using Shared.Models;
 
-namespace Shared.Utils;
+namespace Server.Utils;
 
 public static class DTOMapper
 {

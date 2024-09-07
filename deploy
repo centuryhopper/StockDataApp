@@ -15,9 +15,7 @@ rmdir ./output/
 # copy shared models over to server
 cd ../Server/
 rm -rf ./Models/
-rm -rf ./Utils/
-mkdir ./Models ./Utils/
+mkdir ./Models
 cp -rf ../Shared/Models/* ./Models/
-cp -rf ../Shared/Utils/* ./Utils/
 
 
