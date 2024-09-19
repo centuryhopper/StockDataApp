@@ -29,20 +29,20 @@ using Swashbuckle.AspNetCore.Filters;
 
 // MUST HAVE IT LIKE THIS FOR NLOG TO RECOGNIZE DOTNET USER-SECRETS INSTEAD OF HARDCODED DELIMIT PLACEHOLDER VALUE FROM APPSETTINGS.JSON
 
-#if DEBUG
-    var logger = LogManager.Setup().LoadConfigurationFromFile("nlog_dev.config").GetCurrentClassLogger();
-#else
-    var logger = LogManager.Setup().LoadConfigurationFromFile("nlog.config").GetCurrentClassLogger();
-#endif
+// #if DEBUG
+//     var logger = LogManager.Setup().LoadConfigurationFromFile("nlog_dev.config").GetCurrentClassLogger();
+// #else
+//     var logger = LogManager.Setup().LoadConfigurationFromFile("nlog.config").GetCurrentClassLogger();
+// #endif
 
-try
-{
+// try
+// {
     
     var builder = WebApplication.CreateBuilder(args);
 
     // Add services to the container.
-    builder.Logging.ClearProviders();
-    builder.Host.UseNLog();
+    // builder.Logging.ClearProviders();
+    // builder.Host.UseNLog();
 
 
     builder.Services.AddControllers();
@@ -140,12 +140,12 @@ try
 
 
     app.Run();
-}
- catch (Exception ex)
-{
-    logger.Error(ex, "Stopped program because of exception: " + ex);
-    throw ex;
-}
-finally {
-    LogManager.Shutdown();
-}
+// }
+//  catch (Exception ex)
+// {
+//     logger.Error(ex, "Stopped program because of exception: " + ex);
+//     throw ex;
+// }
+// finally {
+//     LogManager.Shutdown();
+// }
