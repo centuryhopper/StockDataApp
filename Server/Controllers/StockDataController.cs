@@ -57,7 +57,8 @@ public class StockDataController : ControllerBase
     {
         try
         {
-            if (await stockDataDbContext.Stockdata.FirstOrDefaultAsync(s => s.TickerSymbol == stockDataDTO.TickerSymbol) is null)
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (await stockDataDbContext.Stockdata.Where(s => s.Userid == Convert.ToInt32(userId)).FirstOrDefaultAsync(s => s.TickerSymbol == stockDataDTO.TickerSymbol) is null)
             {
                 await stockDataDbContext.Stockdata.AddAsync(new Stockdatum
                 {
@@ -74,6 +75,10 @@ public class StockDataController : ControllerBase
                     PreviousClose = stockDataDTO.PreviousClose
                 });
                 await stockDataDbContext.SaveChangesAsync();
+            }
+            else
+            {
+                return BadRequest(new GeneralResponse(false, "You already saved this stock."));
             }
         }
         catch (System.Exception ex)

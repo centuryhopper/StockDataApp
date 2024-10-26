@@ -1,3 +1,4 @@
+
 <div class="modal fade @(isVisible ? "show d-block" : "")" tabindex="-1" style="background: rgba(0, 0, 0, 0.5);">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -19,10 +20,10 @@
     private bool isVisible = false;
     private string modalClass = string.Empty;
 
-    [Parameter] public string Title { get; set; } = "Notification";
-    [Parameter] public string BodyText { get; set; } = "Message";
+    private string Title { get; set; } = "Notification";
+    private string BodyText { get; set; } = "Message";
 
-    public void Show(string title, string message, string type)
+    public void Show(string title, string message, ModalType type)
     {
         Title = title;
         BodyText = message;
@@ -37,13 +38,14 @@
         StateHasChanged();
     }
 
-    private void SetModalClass(string type)
+    private void SetModalClass(ModalType modalType)
     {
-        modalClass = type switch
+        modalClass = modalType switch
         {
-            "success" => "text-success",
-            "warning" => "text-warning",
-            "error" => "text-danger",
+            ModalType.SUCCESS => "text-success",
+            ModalType.WARNING => "text-warning",
+            ModalType.ERROR => "text-danger",
+            ModalType.INFO => "text-info",
             _ => ""
         };
     }

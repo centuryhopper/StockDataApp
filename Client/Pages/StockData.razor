@@ -40,7 +40,7 @@
     <button class="btn btn-danger" @onclick="()=>ResetSearch()">Reset</button>
 }
 
-@if (stocks == null || !stocks.Any())
+@if (stocks == null)
 {
     <p>Loading...</p>
 }
@@ -89,16 +89,16 @@ else
     Title="Delete Confirmation"
     BodyText="Are you sure you want to delete this item?" />
 
+<NotificationModal @ref="notificationModal" />
+
 
 
 @code {
+    private NotificationModal notificationModal = default!;
     private IEnumerable<StockDataDTO> stocks;
     private int appUserId { get; set; }
     private string inputTicker { get; set; } = string.Empty;
-    private string InputTicker
-    {
-        get => inputTicker.ToUpper(); // return uppercase for the bound value
-    }
+    private string InputTicker => inputTicker.ToUpper();
 
     private string sessionTicker { get; set; }
     private StockRealTimeInfo? stockRealTimeInfo { get; set; } = null;
@@ -108,6 +108,7 @@ else
     protected override async Task OnInitializedAsync()
     {
         stocks = await StockDataService.GetStockData();
+        stocks = stocks.OrderBy(stock=>stock.StockDataId);
 
         var authState = await ((ApiAuthenticationStateProvider)AuthenticationStateProvider).GetAuthenticationStateAsync();
         var user = authState.User;
@@ -116,15 +117,15 @@ else
 
     private async Task HandleDelete(int stockDataId)
     {
-        // TODO: add warning before delete
+        // gives user warning before delete
         var confirmed = await confirmModal!.ShowAsync();
-        //Console.WriteLine(confirmed);
         if (confirmed)
         {
             var response = await StockDataService.DeleteStockData(stockDataId);
             if (response.Flag)
             {
-                NavigationManager.NavigateTo("refresh/stock-data");
+                stocks = await StockDataService.GetStockData();
+                stocks = stocks.OrderBy(stock=>stock.StockDataId);
             }
         }
         
@@ -138,7 +139,9 @@ else
         var response = await StockDataService.UpdateStockData(tickerSymbol.Trim(), realTimeInfo);
         if (response.Flag)
         {
-            NavigationManager.NavigateTo("refresh/stock-data");
+            stocks = await StockDataService.GetStockData();
+            stocks = stocks.OrderBy(stock=>stock.StockDataId);
+            StateHasChanged();
         }
     }
 
@@ -160,6 +163,8 @@ else
                 ,PreviousClose = stockRealTimeInfo.PreviousClose
             });
 
+            //Console.WriteLine(response.Message);
+
             if (response.Flag)
             {
                 ResetSearch();
@@ -174,12 +179,23 @@ else
         sessionTicker = "";
         stockRealTimeInfo = null;
     }
+
     private async Task FetchStockData()
     {
         if (!string.IsNullOrWhiteSpace(InputTicker))
         {
             stockRealTimeInfo = await StockDataService.GetStockRealTimeData(InputTicker.Trim());
+            if (stockRealTimeInfo is null)
+            {
+                notificationModal.Show("ERROR", $"{InputTicker} does not exist", ModalType.ERROR);
+            }
             sessionTicker = InputTicker;
+            //Console.WriteLine("fetching!");
+        }
+        else
+        {
+            //Console.WriteLine("notice!");
+            notificationModal.Show("Notice", "Please enter a four-digit ticker symbol", ModalType.INFO);
         }
     }
 

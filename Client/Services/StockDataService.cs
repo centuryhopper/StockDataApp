@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using Blazored.LocalStorage;
 using Client.Interfaces;
 using Client.Providers;
+using Client.Utils;
 using Microsoft.AspNetCore.Components.Authorization;
 using Shared.Models;
 using static Shared.Models.ServiceResponses;
@@ -18,7 +19,7 @@ public class StockDataService : IStockDataService
 
     public StockDataService(IHttpClientFactory httpClientFactory, ILocalStorageService localStorageService)
     {
-        httpClient = httpClientFactory.CreateClient("API");
+        httpClient = httpClientFactory.CreateClient(Constants.HTTP_CLIENT);
         this.localStorageService = localStorageService;
     }
 
@@ -51,10 +52,10 @@ public class StockDataService : IStockDataService
             throw new Exception(data.Message);
         }
 
-        return data!;   
+        return data!;
 
     }
-    
+
     public async Task<IEnumerable<StockDataDTO>> GetStockData()
     {
         var response = await httpClient.GetAsync(
@@ -76,6 +77,7 @@ public class StockDataService : IStockDataService
         var response = await httpClient.GetAsync($"api/StockData/historical-stock-data?tickerSymbol={tickerSymbol}");
         if (!response.IsSuccessStatusCode)
         {
+            System.Console.WriteLine(response.StatusCode.ToString());
             throw new Exception("couldn't get data for this ticker symbol");
         }
 
@@ -94,7 +96,7 @@ public class StockDataService : IStockDataService
         var response = await httpClient.GetAsync($"api/StockData/stock-realtime-data?tickerSymbol={tickerSymbol}");
         if (!response.IsSuccessStatusCode)
         {
-            throw new Exception("couldn't get data for this ticker symbol");
+            return null;
         }
 
         var realTimeInfo = await response.Content.ReadFromJsonAsync<StockRealTimeInfo>();
@@ -104,13 +106,13 @@ public class StockDataService : IStockDataService
     public async Task<GeneralResponse> SaveStockData(StockDataDTO stockDataDTO)
     {
         var response = await httpClient.PostAsJsonAsync("api/StockData/save-stock-data", stockDataDTO);
-        var data = await response.Content.ReadFromJsonAsync<GeneralResponse>();
+        var responseContent = await response.Content.ReadFromJsonAsync<GeneralResponse>();
         if (!response.IsSuccessStatusCode)
         {
-            throw new Exception(data.Message);
+            throw new Exception(responseContent.Message);
         }
 
-        return data!;        
+        return responseContent!;
     }
 
     public async Task<GeneralResponse> DeleteStockData(int stockDataId)
@@ -122,6 +124,6 @@ public class StockDataService : IStockDataService
             throw new Exception(data.Message);
         }
 
-        return data!; 
+        return data!;
     }
 }

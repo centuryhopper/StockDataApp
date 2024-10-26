@@ -2,7 +2,7 @@
 @inject IStockDataService StockDataService
 @inject NavigationManager NavigationManager
 
-<h3>Historical Data for @Ticker</h3>
+@* <h3 class="text-center">Historical Data for @Ticker</h3> *@
 
 <div class="container-fluid overflow-x-auto">
     <LineChart @ref="lineChart" Width="800" />
@@ -24,13 +24,23 @@
 
     private bool gotData = false;
 
-// TODO: cache the data in localstorage so that we dont have to make api call everytime we load the page (helps minimize number of api calls per day)
     protected override async Task OnInitializedAsync()
     {
-        //Console.WriteLine("OnInitializedAsync");
-        // Replace with actual service call to fetch historical data
-        HistoricalStockData = await StockDataService.GetStockHistoricalData(Ticker);
-        Console.WriteLine(HistoricalStockData);
+        string storedHistory = await localStorageService.GetItemAsStringAsync(Ticker);
+        
+        if (string.IsNullOrWhiteSpace(storedHistory))
+        {
+            HistoricalStockData = await StockDataService.GetStockHistoricalData(Ticker);
+            // cache the data in localstorage so that we dont have to make api call everytime we load the page (helps minimize number of api calls per day)
+            await localStorageService.SetItemAsStringAsync(Ticker, JsonConvert.SerializeObject(HistoricalStockData));
+        }
+        else
+        {
+            HistoricalStockData = JsonConvert.DeserializeObject<HistoricalStockData>(storedHistory);
+            Console.WriteLine("getting historical data from local storage");
+        }
+
+        //Console.WriteLine(HistoricalStockData);
         
         foreach (var entry in HistoricalStockData?.DailyPrices ?? [])
         {
@@ -50,10 +60,10 @@
             dailyPrices.Add(dailyPrice);
             //labels.Add(date);
             closingPrices.Add((double) dailyPrice.AdjustedClose);
-            Console.WriteLine(date);
+            //Console.WriteLine(date);
         }
 
-        closingPrices.ForEach(cp=>Console.WriteLine(cp));
+        //closingPrices.ForEach(cp=>Console.WriteLine(cp));
         // json comes in backwards so we reverse it to match the labeling
         closingPrices.Reverse();
 
@@ -83,11 +93,11 @@
         lineChartOptions.Responsive = true;
         lineChartOptions.Interaction = new Interaction { Mode = InteractionMode.Index };
 
-        lineChartOptions.Scales.X!.Title = new ChartAxesTitle { Text = DateTime.Now.Year.ToString(), Display = true };
+        lineChartOptions.Scales.X!.Title = new ChartAxesTitle { Text = $"{DateTime.Now.Year.ToString()} (Closing price at the last open market day of each month)", Display = true };
         lineChartOptions.Scales.Y!.Title = new ChartAxesTitle { Text = "Dollars per Share", Display = true };
         //lineChartOptions.Scales.Y!.Max = 5000;
 
-        lineChartOptions.Plugins.Title!.Text = "Stock Historical Progress";
+        lineChartOptions.Plugins.Title!.Text = $"{Ticker} Historical Progress";
         lineChartOptions.Plugins.Title.Display = true;
 
         gotData = true;

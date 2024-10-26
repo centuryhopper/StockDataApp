@@ -1,14 +1,14 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Client;
-// using Blazored.Modal;
 using Microsoft.AspNetCore.Components.Authorization;
 using Client.Providers;
 using Blazored.LocalStorage;
+using Blazored.SessionStorage;
 using Client.Interfaces;
 using Client.Services;
 using Client.Handlers;
-using Radzen;
+using Client.Utils;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -18,8 +18,9 @@ builder.Services.AddScoped<AuthorizationMessageHandler>();
 
 builder.Services
 .AddHttpClient(
-    "API",
-    client => {
+    Constants.HTTP_CLIENT,
+    client =>
+    {
         client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress);
     }
 )
@@ -28,10 +29,11 @@ builder.Services
 
 
 builder.Services.AddScoped(
-    sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("API")
+    sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient(Constants.HTTP_CLIENT)
 );
 
 builder.Services.AddBlazoredLocalStorageAsSingleton();
+builder.Services.AddBlazoredSessionStorage();
 
 
 builder.Services.AddBlazorBootstrap();

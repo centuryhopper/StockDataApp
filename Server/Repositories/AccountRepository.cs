@@ -56,23 +56,21 @@ public class AccountRepository(StockDataDbContext stockDataDbContext, UserManage
         var stockUser = await stockDataDbContext.Stockusers.FirstOrDefaultAsync(u=>u.UmsUserid == getUser.Id);
 
         var getUserRole = await userManager.GetRolesAsync(getUser);
-        var userSession = new UserSession(stockUser.Userid, getUser.UserName, getUser.Email, getUserRole.First());
-        string token = GenerateToken(userSession);
-
+        string token = GenerateToken(stockUser.Userid, getUser.UserName, getUser.Email, getUserRole.First());
 
         return new LoginResponse(true, token!, "Login completed");
     }
 
-    private string GenerateToken(UserSession user)
+    private string GenerateToken(int userId, string userName, string email, string role)
     {
-        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(webHostEnvironment.IsDevelopment() ? configuration["Jwt:Key"] : Environment.GetEnvironmentVariable("JWT_Key")));
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(webHostEnvironment.IsDevelopment() ? configuration["Jwt:Key"] : Environment.GetEnvironmentVariable("Jwt_Key")));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
         var userClaims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Name, user.UserName),
-            new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Role, user.Role)
+            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+            new Claim(ClaimTypes.Name, userName),
+            new Claim(ClaimTypes.Email, email),
+            new Claim(ClaimTypes.Role, role)
         };
 
         var token = new JwtSecurityToken(

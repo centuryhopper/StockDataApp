@@ -1,4 +1,6 @@
 using Blazored.LocalStorage;
+using Blazored.SessionStorage;
+using Client.Utils;
 using Microsoft.AspNetCore.Components.Authorization;
 // using Microsoft.AspNetCore.Http;
 using System.Net.Http.Headers;
@@ -9,13 +11,15 @@ namespace Client.Providers
 {
     public class ApiAuthenticationStateProvider : AuthenticationStateProvider
     {
-        private readonly HttpClient _httpClient;
-        private readonly ILocalStorageService _localStorage;
+        private readonly HttpClient httpClient;
+        private readonly ILocalStorageService localStorage;
+        private readonly ISessionStorageService sessionStorageService;
 
-        public ApiAuthenticationStateProvider(IHttpClientFactory httpClientFactory, ILocalStorageService localStorage)
+        public ApiAuthenticationStateProvider(IHttpClientFactory httpClientFactory, ILocalStorageService localStorage, ISessionStorageService sessionStorageService)
         {
-            _httpClient = httpClientFactory.CreateClient("API");
-            _localStorage = localStorage;
+            this.sessionStorageService = sessionStorageService;
+            httpClient = httpClientFactory.CreateClient(Constants.HTTP_CLIENT);
+            this.localStorage = localStorage;
         }
 
         /// <summary>
@@ -24,14 +28,14 @@ namespace Client.Providers
         /// <returns></returns>
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            var savedToken = await _localStorage.GetItemAsync<string>("authToken");
+            var savedToken = await sessionStorageService.GetItemAsync<string>("authToken") ?? await localStorage.GetItemAsync<string>("authToken");
 
             if (string.IsNullOrWhiteSpace(savedToken))
             {
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
             }
 
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", savedToken);
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", savedToken);
 
             return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity(ParseClaimsFromJwt(savedToken), "jwt")));
         }
@@ -91,6 +95,6 @@ namespace Client.Providers
                 case 3: base64 += "="; break;
             }
             return Convert.FromBase64String(base64);
-        }       
+        }
     }
 }
